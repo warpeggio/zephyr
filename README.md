@@ -6,16 +6,20 @@ Barebones API development pipeline using python/flask and AWS EKS
 >  1. A light wind from the west. 
 >  2. Any light refreshing wind; **a gentle breeze.**
 
-# Local usage / development
-For now, you can run the local flask app by installing the pre-reqs and letting it rip:
-0. make sure you've got python3 and pip3
-1. pip3 install -r requirements.txt
-2. python3 ./zephyr.py
+## Pre-requisites
+1. Install docker - On ubuntu, verify that your user is in the `docker` group. Restart any login sessions as necessary.
+2. Download the repository, and while CWD'd to your local copy, run `docker build -t zephyr .` to create the image for use on your workstation.
 
-# The test suite
-To run the test suite, issue the following command from the top level of the project directory:
-`~/.local/bin/pytest --no-header -vvv -rA *.py ; echo $?`
-Any functions prefixed with `test_` will get called.
+# Local usage / development
+## Run the server locally
+0. Build the image with `docker build -t zephyr .`
+1. docker run -p 5000:5000 -t zephyr
+2. You can now access the application via web browser at http://localhost:5000
+## The test suite
+0. Build the image with `docker build -t zephyr .`
+1. `docker run -t zephyr -m pytest --no-header -vvv -rA *.py`
+Any functions in zephyr.py prefixed with `test_` will get called by pytest.
+In a perfect world, the test suite must pass for code to be deployed in production.
 
 # Deploying to EKS
 `#TODO`
