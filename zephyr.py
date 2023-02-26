@@ -25,5 +25,5 @@ def test_message_is_automate():
     assert data['message'] == "Automate all the things!"
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0")
 
