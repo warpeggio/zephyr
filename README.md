@@ -7,8 +7,16 @@ Barebones API development pipeline using python/flask and AWS EKS
 >  2. Any light refreshing wind; **a gentle breeze.**
 
 ## Pre-requisites
+### For the local instance
 1. Install docker - On ubuntu, verify that your user is in the `docker` group. Restart any login sessions as necessary.
 2. Download the repository, and while CWD'd to your local copy, run `docker build -t zephyr .` to create the image for use on your workstation.
+### For the Infastructure-as-Code
+1. Install pulumi. Download the binaries to your workstation and put them in a directory in your $PATH
+2. Install awscli and configure your credentials:
+    `aws configure`
+3. You'll need python3
+4. awscli must be at least v 1.24
+	pip3 install --upgrade awscli
 
 # Local usage / development
 ## Run the server locally
