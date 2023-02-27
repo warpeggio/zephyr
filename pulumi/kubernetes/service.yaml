@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: zephyr-webapp
+  namespace: zephyr-webapp
+spec:
+  selector:
+    app: zephyr-webapp
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
