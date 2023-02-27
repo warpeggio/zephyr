@@ -33,16 +33,17 @@ In a perfect world, the test suite must pass for code to be deployed in producti
 # Deploying to EKS
 1. From the `pulumi` directory, issue `pip3 install -r requirements.txt`
 2. then you can `pulumi up`
-3. It will fail trying to do the loadbalancer stuff; wait a moment for `pulumi refresh`, and then run `pulumi up` again
-4. ???? It still doesn't work because the loadbalancer configuration is wrong. It's not able to parse the ingress stuff, or the loadbalancer module is incompatible with the kubernetes version. Not sure.
-5. Update the local kubernetes config:
-    `pulumi stack output kubeconfig > ~/.kube/config`
-6. From the `kubernetes` directory, we can now apply a handful of yamls to effect a deployment:
-    `kubectl apply -f namespace.yaml`
-    `kubectl apply -f service.yaml`
-    `kubectl apply -f deployment.yaml`
-    `kubectl apply -f ingress.yaml -n zephyr-webapp`
-
-# Cleanup
+3. This automatically creates an EKS stack, builds an image from the Dockerfile, and runs that image on the EKS cluster.
+4. After you make changes to the application, you can run `pulumi up` from the `pulumi` directory to upload a new image to the cluster.
+## Cleanup
 `pulumi destroy` from the pulumi dir will get it done.
 
+# Contributing
+1. Open an issue to describe the work [Write some test cases?]
+2. Create a branch from `development` that references your issue
+3. Do neat stuff
+4. Run the test suite to validate safety, reliability, and suitabilty
+5. Open a pull request to merge your code with the `development` branch
+6. Smoke test by deploying the development branch
+7. Merge the `development` branch into `main`
+8. Deploy to production

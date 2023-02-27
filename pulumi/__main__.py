@@ -1,4 +1,5 @@
 import base64
+import os
 import pulumi
 import pulumi_eks as eks
 import pulumi_aws as aws
@@ -78,116 +79,118 @@ cluster = eks.Cluster(
 # Export the cluster's kubeconfig.
 pulumi.export("kubeconfig", cluster.kubeconfig)
 
-# The rest of this is the loadbalancer stuff
-
-import json
-
-aws_lb_ns = "aws-lb-controller"
-service_account_name = f"system:serviceaccount:{aws_lb_ns}:aws-lb-controller-serviceaccount"
-oidc_arn = cluster.core.oidc_provider.arn
-oidc_url = cluster.core.oidc_provider.url
-
-# Create IAM role for AWS LB controller service account
-iam_role = aws.iam.Role(
-    "aws-loadbalancer-controller-role",
-    assume_role_policy=pulumi.Output.all(oidc_arn, oidc_url).apply(
-        lambda args: json.dumps(
-            {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Principal": {
-                            "Federated": args[0],
-                        },
-                        "Action": "sts:AssumeRoleWithWebIdentity",
-                        "Condition": {
-                            "StringEquals": {f"{args[1]}:sub": service_account_name},
-                        },
-                    }
-                ],
-            }
-        )
-    ),
-)
-
-with open("files/iam_policy.json") as policy_file:
-    policy_doc = policy_file.read()
-
-iam_policy = aws.iam.Policy(
-    "aws-loadbalancer-controller-policy",
-    policy=policy_doc,
-    opts=pulumi.ResourceOptions(parent=iam_role),
-)
-
-# Attach IAM Policy to IAM Role
-aws.iam.PolicyAttachment(
-    "aws-loadbalancer-controller-attachment",
-    policy_arn=iam_policy.arn,
-    roles=[iam_role.name],
-    opts=pulumi.ResourceOptions(parent=iam_role),
-)
-
-provider = k8s.Provider("provider", kubeconfig=cluster.kubeconfig)
-
-namespace = k8s.core.v1.Namespace(
-    f"{aws_lb_ns}-ns",
-    metadata={
-        "name": aws_lb_ns,
-        "labels": {
-            "app.kubernetes.io/name": "aws-load-balancer-controller",
-        }
-    },
-    opts=pulumi.ResourceOptions(
-        provider=provider,
-        parent=provider,
-    )
-)
-
-service_account = k8s.core.v1.ServiceAccount(
-    "aws-lb-controller-sa",
-    metadata={
-        "name": "aws-lb-controller-serviceaccount",
-        "namespace": namespace.metadata["name"],
-        "annotations": {
-            "eks.amazonaws.com/role-arn": iam_role.arn.apply(lambda arn: arn)
-        }
-    }
-)
-
-# This transformation is needed to remove the status field from the CRD
-# otherwise the Chart fails to deploy
-def remove_status(obj, opts):
-    if obj["kind"] == "CustomResourceDefinition":
-        del obj["status"]
-
-k8s.helm.v3.Chart(
-    "lb", k8s.helm.v3.ChartOpts(
-        chart="aws-load-balancer-controller",
-        version="1.2.0",
-        fetch_opts=k8s.helm.v3.FetchOpts(
-            repo="https://aws.github.io/eks-charts"
-        ),
-        namespace=namespace.metadata["name"],
-        values={
-            "region": "us-east-1",
-            "serviceAccount": {
-                "name": "aws-lb-controller-serviceaccount",
-                "create": False,
-            },
-            "vpcId": cluster.eks_cluster.vpc_config.vpc_id,
-            "clusterName": cluster.eks_cluster.name,
-            "podLabels": {
-                "stack": pulumi.get_stack(),
-                "app": "aws-lb-controller"
-            }
-        },
-        transformations=[remove_status]
-    ), pulumi.ResourceOptions(
-        provider=provider, parent=namespace
-    )
-)
-
+#=====================================================================================================
+# This is the loadbalancer stuff
+# I couldn't get this working. The pulumi docs prescribe another, shorter technique.
+#
+#import json
+#
+#aws_lb_ns = "aws-lb-controller"
+#service_account_name = f"system:serviceaccount:{aws_lb_ns}:aws-lb-controller-serviceaccount"
+#oidc_arn = cluster.core.oidc_provider.arn
+#oidc_url = cluster.core.oidc_provider.url
+#
+## Create IAM role for AWS LB controller service account
+#iam_role = aws.iam.Role(
+#    "aws-loadbalancer-controller-role",
+#    assume_role_policy=pulumi.Output.all(oidc_arn, oidc_url).apply(
+#        lambda args: json.dumps(
+#            {
+#                "Version": "2012-10-17",
+#                "Statement": [
+#                    {
+#                        "Effect": "Allow",
+#                        "Principal": {
+#                            "Federated": args[0],
+#                        },
+#                        "Action": "sts:AssumeRoleWithWebIdentity",
+#                        "Condition": {
+#                            "StringEquals": {f"{args[1]}:sub": service_account_name},
+#                        },
+#                    }
+#                ],
+#            }
+#        )
+#    ),
+#)
+#
+#with open("files/iam_policy.json") as policy_file:
+#    policy_doc = policy_file.read()
+#
+#iam_policy = aws.iam.Policy(
+#    "aws-loadbalancer-controller-policy",
+#    policy=policy_doc,
+#    opts=pulumi.ResourceOptions(parent=iam_role),
+#)
+#
+## Attach IAM Policy to IAM Role
+#aws.iam.PolicyAttachment(
+#    "aws-loadbalancer-controller-attachment",
+#    policy_arn=iam_policy.arn,
+#    roles=[iam_role.name],
+#    opts=pulumi.ResourceOptions(parent=iam_role),
+#)
+#
+#provider = k8s.Provider("provider", kubeconfig=cluster.kubeconfig)
+#
+#namespace = k8s.core.v1.Namespace(
+#    f"{aws_lb_ns}-ns",
+#    metadata={
+#        "name": aws_lb_ns,
+#        "labels": {
+#            "app.kubernetes.io/name": "aws-load-balancer-controller",
+#        }
+#    },
+#    opts=pulumi.ResourceOptions(
+#        provider=provider,
+#        parent=provider,
+#    )
+#)
+#
+#service_account = k8s.core.v1.ServiceAccount(
+#    "aws-lb-controller-sa",
+#    metadata={
+#        "name": "aws-lb-controller-serviceaccount",
+#        "namespace": namespace.metadata["name"],
+#        "annotations": {
+#            "eks.amazonaws.com/role-arn": iam_role.arn.apply(lambda arn: arn)
+#        }
+#    }
+#)
+#
+## This transformation is needed to remove the status field from the CRD
+## otherwise the Chart fails to deploy
+#def remove_status(obj, opts):
+#    if obj["kind"] == "CustomResourceDefinition":
+#        del obj["status"]
+#
+#k8s.helm.v3.Chart(
+#    "lb", k8s.helm.v3.ChartOpts(
+#        chart="aws-load-balancer-controller",
+#        version="1.2.0",
+#        fetch_opts=k8s.helm.v3.FetchOpts(
+#            repo="https://aws.github.io/eks-charts"
+#        ),
+#        namespace=namespace.metadata["name"],
+#        values={
+#            "region": "us-east-1",
+#            "serviceAccount": {
+#                "name": "aws-lb-controller-serviceaccount",
+#                "create": False,
+#            },
+#            "vpcId": cluster.eks_cluster.vpc_config.vpc_id,
+#            "clusterName": cluster.eks_cluster.name,
+#            "podLabels": {
+#                "stack": pulumi.get_stack(),
+#                "app": "aws-lb-controller"
+#            }
+#        },
+#        transformations=[remove_status]
+#    ), pulumi.ResourceOptions(
+#        provider=provider, parent=namespace
+#    )
+#)
+#================================================================================================================
 # Third section - setting up the ECR
 ecr_repo = aws.ecr.Repository("zephyr-ecr-repo")
 
@@ -269,4 +272,37 @@ image = docker.Image('zephyr-image',
 # Export the base and specific version image name.
 pulumi.export('baseImageName', image.base_image_name)
 pulumi.export('fullImageName', image.image_name)
+
+
+#=====================================================================================================
+# Final section: Load the image into the kubernetes cluster
+eks_provider = k8s.Provider("eks-provider", kubeconfig=cluster.kubeconfig_json)
+app_labels = { 'app': 'zephyr-webapp' }
+app_dep = k8s.apps.v1.Deployment('zephyr-dep',
+    spec={
+        'selector': { 'matchLabels': app_labels },
+        'replicas': 3,
+        'template': {
+            'metadata': { 'labels': app_labels },
+            'spec': {
+                'containers': [{
+                    'name': 'zephyr-webapp',
+                    'image': image.image_name,
+                }],
+            },
+        },
+    },
+    opts=pulumi.ResourceOptions(provider=eks_provider)
+)
+app_svc = k8s.core.v1.Service('zephyr-svc',
+    metadata={ 'labels': app_labels },
+    spec={
+        'type': 'LoadBalancer',
+        'ports': [{ 'port': 80, 'targetPort': 5000, 'protocol': 'TCP' }],
+        'selector': app_labels,
+    },
+    opts=pulumi.ResourceOptions(provider=eks_provider)
+)
+#pulumi.export('appIp', app_svc.status.apply(lambda s: s.loadBalancer.ingress[0].hostname))
+pulumi.export("appUrl", app_svc.status.load_balancer.ingress[0].hostname)
 
