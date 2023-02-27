@@ -11,12 +11,17 @@ Barebones API development pipeline using python/flask and AWS EKS
 1. Install docker - On ubuntu, verify that your user is in the `docker` group. Restart any login sessions as necessary.
 2. Download the repository, and while CWD'd to your local copy, run `docker build -t zephyr .` to create the image for use on your workstation.
 ### For the Infastructure-as-Code
-1. Install pulumi. Download the binaries to your workstation and put them in a directory in your $PATH
+1. Install pulumi. 
+    One COULD do something like `curl -fsSL https://get.pulumi.com | sh`, or
+    Download the binaries to your workstation and put them in a directory in your $PATH
+    DONT FORGET TO refresh your shell to get the new PATH items, or re-run the bashrc file as suggested.
 2. Install awscli and configure your credentials:
     `aws configure`
 3. You'll need python3
 4. awscli must be at least v 1.24
 	pip3 install --upgrade awscli
+5. kubectl must be available / executable
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 See "Deploying to EKS" below for more information.
 
 # Local usage / development
@@ -32,6 +37,7 @@ In a perfect world, the test suite must pass for code to be deployed in producti
 
 # Deploying to EKS
 1. From the `pulumi` directory, issue `pip3 install -r requirements.txt`
+2. Next, "login" locally to pulumi (to store state) with `pulumi login --local`
 2. then you can `pulumi up`
 3. This automatically creates an EKS stack, builds an image from the Dockerfile, and runs that image on the EKS cluster.
 4. After you make changes to the application, you can run `pulumi up` from the `pulumi` directory to upload a new image to the cluster.
