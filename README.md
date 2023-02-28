@@ -1,53 +1,62 @@
 # zephyr
+
 Barebones API development pipeline using python/flask and AWS EKS
 
 # Introduction
+
 > Zephyr
 >  1. A light wind from the west. 
 >  2. Any light refreshing wind; **a gentle breeze.**
 
 ## Pre-requisites
-### For the local instance
-1. Install docker - On ubuntu, verify that your user is in the `docker` group. Restart any login sessions as necessary.
-2. Download the repository, and while CWD'd to your local copy, run `docker build -t zephyr .` to create the image for use on your workstation.
-### For the Infastructure-as-Code
-1. Install pulumi. 
-    One COULD do something like `curl -fsSL https://get.pulumi.com | sh`, or
-    Download the binaries to your workstation and put them in a directory in your $PATH
-    DONT FORGET TO refresh your shell to get the new PATH items, or re-run the bashrc file as suggested.
-2. Install awscli and configure your credentials:
-    `aws configure`
-3. You'll need a few python packages:
-     apt install python3-pip python3-venv python-is-python3
-4. awscli must be at least v 1.24
-	pip3 install --upgrade awscli
-5. kubectl must be available / executable
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        chmod 755 kubectl && sudo mv kubectl /usr/local/bin
-See "Deploying to EKS" below for more information.
+
+Development is currently based around a Vagrant image for convenience. You will need Virtualbox and Vagrant on your workstation.
+
+If you can `vagrant up`, the resulting environment will have all pre-requisites installed.
 
 # Local usage / development
-## Run the server locally
+
+1. You've already downloaded the repository. Run `vagrant up` to provision your workspace.
+2. Log into the vagrant environment with `vagrant ssh`
+
+## Local server
+
 0. Build the image with `docker build -t zephyr .`
-1. docker run -p 5000:5000 -t zephyr
+1. Run the resulting image with `docker run -p 5000:5000 -t zephyr`
 2. You can now access the application via web browser at http://localhost:5000
+
 ## The test suite
+
 0. Build the image with `docker build -t zephyr .`
 1. `docker run -t zephyr -m pytest --no-header -vvv -rA *.py`
+
 Any functions in zephyr.py prefixed with `test_` will get called by pytest.
+
 In a perfect world, the test suite must pass for code to be deployed in production.
 
-# Deploying to EKS
-1. From the `pulumi` directory, issue `pip3 install -r requirements.txt`
+# Cloud Development
+
+The EKS deployments are also managed from within the Vagrant environment, so as before, 
+
+1. `vagrant up`
+2. `vagrant ssh`
+
+## Deploying to AWS EKS
+
+1. Configure your aws credentials with `aws configure`
 2. Next, "login" locally to pulumi (to store state) with `pulumi login --local`
-2. then you can `pulumi up`
-3. This automatically creates an EKS stack, builds an image from the Dockerfile, and runs that image on the EKS cluster.
-4. After you make changes to the application, you can run `pulumi up` from the `pulumi` directory to upload a new image to the cluster.
+3. then you can `pulumi up`
+4. This automatically creates an EKS stack, builds an image from the Dockerfile, and runs that image on the EKS cluster.
 5. The output will include an appUrl, which you can use to access the application.
+
+If and when you make changes to the application, you can run `pulumi up` from the `pulumi` directory to upload a new image to the cluster.
+
 ## Cleanup
+
 `pulumi destroy` from the pulumi dir will get it done.
 
 # Contributing
+
 1. Open an issue to describe the work [Write some test cases?]
 2. Create a branch from `development` that references your issue
 3. Do neat stuff

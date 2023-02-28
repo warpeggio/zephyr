@@ -28,4 +28,17 @@ Vagrant.configure(2) do |config|
   config.ssh.insert_key = true
   config.vm.provision :shell, :inline => "echo 'Waiting for on-boot apt tasks to finish...'"
   config.vm.provision :shell, :inline => "systemd-run --property='After=apt-daily.service apt-daily-upgrade.service' --wait /bin/true"
+  config.vm.provision :shell, :inline => "apt update"
+  config.vm.provision :shell, :inline => "apt install -y python3-venv python-is-python3 python3-pip docker docker.io"
+  config.vm.provision :shell, :inline => "pip3 install --upgrade awscli"
+  config.vm.provision :shell, :inline => "usermod -aG docker vagrant"
+  config.vm.provision :shell, :privileged => false, :inline => "curl -fsSL https://get.pulumi.com | sh"
+  config.vm.provision :shell, :inline => "curl -S -s -L https://dl.k8s.io/release/v1.26.1/bin/linux/amd64/kubectl -o /opt/kubectl"
+  config.vm.provision :shell, :inline => "chmod 755 /opt/kubectl; mv /opt/kubectl /usr/local/bin/"
+  config.vm.provision :shell, :inline => "echo export PULUMI_CONFIG_PASSPHRASE='' >> /home/vagrant/.bashrc"
+  config.vm.synced_folder "./", "/home/vagrant/zephyr", id: "app-share",
+    owner: "vagrant",
+    group: "vagrant"
+
+
 end
