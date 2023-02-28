@@ -23,6 +23,7 @@ Barebones API development pipeline using python/flask and AWS EKS
 	pip3 install --upgrade awscli
 5. kubectl must be available / executable
         curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod 755 kubectl && sudo mv kubectl /usr/local/bin
 See "Deploying to EKS" below for more information.
 
 # Local usage / development
