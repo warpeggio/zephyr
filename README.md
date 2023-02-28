@@ -18,16 +18,17 @@ If you can `vagrant up`, the resulting environment will have all pre-requisites 
 
 1. You've already downloaded the repository. Run `vagrant up` to provision your workspace.
 2. Log into the vagrant environment with `vagrant ssh`
+3. The repository is available at `~/zephyr`
 
 ## Local server
 
-0. Build the image with `docker build -t zephyr .`
+0. From the `~/zephyr/` directory in Vagrant, build the image with `docker build -t zephyr .`
 1. Run the resulting image with `docker run -p 5000:5000 -t zephyr`
 2. You can now access the application via web browser at http://localhost:5000
 
 ## The test suite
 
-0. Build the image with `docker build -t zephyr .`
+0. From the `~/zephyr/` directory in Vagrant, build the image with `docker build -t zephyr .`
 1. `docker run -t zephyr -m pytest --no-header -vvv -rA *.py`
 
 Any functions in zephyr.py prefixed with `test_` will get called by pytest.
@@ -43,6 +44,7 @@ The EKS deployments are also managed from within the Vagrant environment, so as 
 
 ## Deploying to AWS EKS
 
+0. Within Vagrant, change your working directory to `~/zephyr/pulumi`
 1. Configure your aws credentials with `aws configure`
 2. Next, "login" locally to pulumi (to store state) with `pulumi login --local`
 3. then you can `pulumi up`
