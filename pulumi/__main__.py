@@ -81,7 +81,7 @@ pulumi.export("kubeconfig", cluster.kubeconfig)
 
 #=====================================================================================================
 # setting up the ECR
-ecr_repo = aws.ecr.Repository("zephyr-ecr-repo")
+ecr_repo = aws.ecr.Repository("zephyr-ecr-repo",force_delete=True)
 
 repo_policy = aws.ecr.RepositoryPolicy(
     "zephyr-ecr-repo-policy",
