@@ -17,7 +17,8 @@ Barebones API development pipeline using python/flask and AWS EKS
     DONT FORGET TO refresh your shell to get the new PATH items, or re-run the bashrc file as suggested.
 2. Install awscli and configure your credentials:
     `aws configure`
-3. You'll need python3
+3. You'll need a few python packages:
+     apt install python3-pip python3-venv python-is-python3
 4. awscli must be at least v 1.24
 	pip3 install --upgrade awscli
 5. kubectl must be available / executable
@@ -41,6 +42,7 @@ In a perfect world, the test suite must pass for code to be deployed in producti
 2. then you can `pulumi up`
 3. This automatically creates an EKS stack, builds an image from the Dockerfile, and runs that image on the EKS cluster.
 4. After you make changes to the application, you can run `pulumi up` from the `pulumi` directory to upload a new image to the cluster.
+5. The output will include an appUrl, which you can use to access the application.
 ## Cleanup
 `pulumi destroy` from the pulumi dir will get it done.
 
