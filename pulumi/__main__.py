@@ -5,8 +5,17 @@ import pulumi_eks as eks
 import pulumi_aws as aws
 import pulumi_kubernetes as k8s
 import pulumi_docker as docker
+import subprocess as sp
 
-cluster_name = "zephyr-cluster"
+branch = sp.getoutput('git rev-parse --abbrev-ref HEAD')
+
+stack = pulumi.get_stack()
+
+if ((stack == 'prod') and (branch != 'main')):
+    print("Warning: You have selected the prod stack, but your local repository is not checked out to main.")
+
+
+cluster_name = f"zephyr-{stack}"
 cluster_tag = f"kubernetes.io/cluster/{cluster_name}"
 
 public_subnet_cidrs = ["172.31.0.0/20", "172.31.48.0/20"]
@@ -153,7 +162,8 @@ image_name = ecr_repo.repository_url
 registry_info = ecr_repo.registry_id.apply(getRegistryInfo)
 
 image = docker.Image('zephyr-image',
-    build='../',
+    #build='../',
+    build=docker.DockerBuild(context='../',args={'stackName': stack}),
     image_name=image_name,
     registry=registry_info,
 )
