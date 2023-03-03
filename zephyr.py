@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
+import sys
 import time
 import json
 
 from flask import Flask, jsonify
+
+argv  = sys.argv[0:]
+stack = argv[1]
 
 app = Flask(__name__)
 
