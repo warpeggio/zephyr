@@ -29,7 +29,7 @@ If you can `vagrant up`, the resulting environment will have all pre-requisites 
 ## The test suite
 
 0. From the `~/zephyr/` directory in Vagrant, build the image with `docker build -t zephyr .`
-1. `docker run -t zephyr -m pytest --no-header -vvv -rA *.py`
+1. `docker run -t zephyr python -m pytest --no-header -vvv -rA *.py`
 
 Any functions in zephyr.py prefixed with `test_` will get called by pytest.
 
