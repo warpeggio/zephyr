@@ -151,21 +151,28 @@ nodeInstanceRole = aws.iam.RolePolicyAttachment(
 pulumi.export("ecr_repo_url", ecr_repo.repository_url)
 
 # Get registry info (creds and endpoint).
-def getRegistryInfo(rid):
-    creds = aws.ecr.get_credentials(registry_id=rid)
-    decoded = base64.b64decode(creds.authorization_token).decode()
-    parts = decoded.split(':')
-    if len(parts) != 2:
-        raise Exception("Invalid credentials")
-    return docker.ImageRegistry(creds.proxy_endpoint, parts[0], parts[1])
+#def getRegistryInfo(rid):
+#    creds = aws.ecr.get_credentials(registry_id=rid)
+#    decoded = base64.b64decode(creds.authorization_token).decode()
+#    parts = decoded.split(':')
+#    if len(parts) != 2:
+#        raise Exception("Invalid credentials")
+#    return docker.ImageRegistry(creds.proxy_endpoint, parts[0], parts[1])
 image_name = ecr_repo.repository_url
-registry_info = ecr_repo.registry_id.apply(getRegistryInfo)
+
+auth_token = aws.ecr.get_authorization_token_output(registry_id=ecr_repo.registry_id)
 
 image = docker.Image('zephyr-image',
     #build='../',
-    build=docker.DockerBuild(context='../',args={'stackName': stack}),
-    image_name=image_name,
-    registry=registry_info,
+    build=docker.DockerBuildArgs(context='../',args={'stackName': stack}),
+    #image_name=image_name,
+    #registry=registry_info,
+    image_name=ecr_repo.repository_url.apply(lambda repository_url: f"{repository_url}:latest"),
+    registry=docker.RegistryArgs(
+        password=pulumi.Output.secret(auth_token.password),
+        username=pulumi.Output.secret(auth_token.user_name),
+        server=ecr_repo.repository_url,
+    )
 )
 
 # Export the base and specific version image name.
