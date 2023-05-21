@@ -6,13 +6,13 @@
 # configures the configuration version
 Vagrant.configure(2) do |config|
   config.vm.box = 'ubuntu-focal'
-  config.vm.box_url = 'https://cloud-images.ubuntu.com/focal/20230215/focal-server-cloudimg-amd64-vagrant.box'
+  config.vm.box_url = 'https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-vagrant.box'
   config.vm.network "forwarded_port", guest: 80,    host: 8888  # web
   config.vm.network "forwarded_port", guest: 5000,  host: 5000  # api
   config.ssh.forward_agent = true
   config.vm.hostname = "zephyr-vagrant"
   config.vm.network :private_network,
-  ip: "172.27.2.2",
+  ip: "192.168.56.56",
   netmask: "255.255.255.0"
   config.vbguest.auto_update = false
   config.vm.provider "virtualbox" do |vb|
