@@ -1,6 +1,6 @@
 name: zephyr
 runtime:
   name: python
-  options:
-    virtualenv: venv
+# options:
+#   virtualenv: venv
 description: A minimal AWS Python Pulumi program
