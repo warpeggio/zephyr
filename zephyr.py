@@ -17,6 +17,14 @@ def index():
     data = {"message": message, "timestamp": timestamp}
     return jsonify(data)
 
+@app.route('/healthz')
+def health_check():
+    return "OK", 200
+
+@app.route('/readyz')
+def ready_check():
+    return "OK", 200
+
 def test_response_is_json():
     response = app.test_client().get('/')
     assert response.status_code == 200

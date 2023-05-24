@@ -194,6 +194,22 @@ app_dep = k8s.apps.v1.Deployment('zephyr-dep',
                 'containers': [{
                     'name': 'zephyr-webapp',
                     'image': image.image_name,
+                    'livenessProbe': {
+                        'httpGet': {
+                            'path': '/healthz',
+                            'port': 5000
+                        },
+                        'initialDelaySeconds': 5,
+                        'periodSeconds': 10
+                    },
+                    'readinessProbe': {
+                        'httpGet': {
+                            'path': '/readyz',
+                            'port': 5000
+                        },
+                        'initialDelaySeconds': 5,
+                        'periodSeconds': 10
+                    }
                 }],
             },
         },
