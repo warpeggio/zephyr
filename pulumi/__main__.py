@@ -6,6 +6,7 @@ import pulumi_aws as aws
 import pulumi_kubernetes as k8s
 import pulumi_docker as docker
 import subprocess as sp
+import json
 
 branch = sp.getoutput('git rev-parse --abbrev-ref HEAD')
 
@@ -71,6 +72,19 @@ for zone, public_subnet_cidr  in zip(avail_zones, public_subnet_cidrs):
     )
     public_subnet_ids.append(public_subnet.id)
 
+dynamodb_table = aws.dynamodb.Table("zephyrTable",
+    attributes=[
+        aws.dynamodb.TableAttributeArgs(
+            name="Id",
+            type="N",
+        )
+    ],
+    hash_key="Id",
+    read_capacity=10,
+    write_capacity=10,
+    billing_mode="PROVISIONED",  # or "PAY_PER_REQUEST" for on-demand
+)
+
 # Create an EKS cluster.
 cluster = eks.Cluster(
     cluster_name,
@@ -87,6 +101,35 @@ cluster = eks.Cluster(
 
 # Export the cluster's kubeconfig.
 pulumi.export("kubeconfig", cluster.kubeconfig)
+
+# Allow the cluster to access DynamoDB
+# Create the DynamoDB policy
+dynamodb_policy = aws.iam.Policy("dynamodb-policy", 
+    description="Policy to allow necessary DynamoDB actions",
+    policy=pulumi.Output.all(dynamodb_table.arn).apply(lambda args: json.dumps({
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:Query",
+                    "dynamodb:Scan",
+                ],
+                "Effect": "Allow",
+                "Resource": args[0]
+            }
+        ]
+    }))
+)
+
+# Attach the policy to the EKS node role
+eks_node_policy_attachment = aws.iam.RolePolicyAttachment("eks-node-policy-attachment",
+    role=cluster.instance_roles[0].name,
+    policy_arn=dynamodb_policy.arn
+)
 
 #=====================================================================================================
 # setting up the ECR
